@@ -32,7 +32,7 @@
                (= :response evt)
                (do
                  (let [[status headers body] val]
-                   (logging/infof "Upstream (%s%s) :response: %d" host (original-headers :path-info) status)
+                   (logging/infof "Upstream (%s%s) :response: %d, headers: %s" host (original-headers :path-info) status (keys headers))
                    (if (= :chunked body)
                      (do
                        (logging/infof "Response body is chunked")
@@ -40,7 +40,9 @@
                      (downstream :response [status headers body]))))
 
                (= :body evt)
-               (downstream :body val)
+               (do
+                 (logging/info "Chunk from %s" host)
+                 (downstream :body val))
 
                (= :abort evt)
                (do
