@@ -60,15 +60,13 @@
 (defn- http-proxy-app
   ([] (http-proxy-app {}))
   ([opts]
-     (aggregate/middleware
-      (fn [downstream env]
-        (let [state (atom {})]
-          (fn [evt val]
-            (cond
+     (fn [downstream env]
+       (let [state (atom {})]
+         (fn [evt val]
+           (cond
              (= :request evt)
              (let [[headers body] val]
-               (initiate-request downstream state headers body))))))
-      opts)))
+               (initiate-request downstream state headers body))))))))
 
 (defn start-server
   [host port]
