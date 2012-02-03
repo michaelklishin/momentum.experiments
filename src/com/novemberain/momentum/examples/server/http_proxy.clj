@@ -20,6 +20,17 @@
 
 (def ^:const default-options {:cycles 0 :scheme nil})
 
+
+(defn- handle-upstream-open
+  [state upstream evt val]
+  (swap! state assoc :upstream upstream :connected-upstream? true)
+  state)
+
+(defn- send-request-upstream
+  [state upstream original-headers original-body]
+  (upstream :request [original-headers original-body])
+  state)
+
 (defn- initiate-request
   [downstream state original-headers original-body]
   (let [host (original-headers "host")]
@@ -27,27 +38,30 @@
      (fn [upstream _]
        (fn [evt val]
          (cond (= :open evt)
-               (upstream :request [original-headers original-body])
+               (-> state
+                   (handle-upstream-open upstream evt val)
+                   (send-request-upstream upstream original-headers original-body))
 
                (= :response evt)
                (do
                  (let [[status headers body] val]
                    (logging/infof "Upstream (%s%s) :response: %d, headers: %s" host (original-headers :path-info) status (keys headers))
                    (if (= :chunked body)
-                     (do
-                       (logging/infof "Response body is chunked")
-                       (downstream :response val))
+                     (downstream :response val)
                      (downstream :response [status headers body]))))
 
                (= :body evt)
-               (do
-                 (logging/info "Chunk from %s" host)
-                 (downstream :body val))
+               (downstream :body val)
 
                (= :abort evt)
                (do
                  (logging/infof "Abort event (%s), val is %s" host (str val))
                  (.printStackTrace val))
+
+               (= :close evt)
+               (do
+                 (logging/infof "Upstream connection %s is closed" host)
+                 (downstream :close val))
 
                :else
                (when-not (= :done evt)
@@ -61,12 +75,16 @@
   ([] (http-proxy-app {}))
   ([opts]
      (fn [downstream env]
-       (let [state (atom {})]
+       (let [state (atom { :downstream downstream })]
          (fn [evt val]
            (cond
              (= :request evt)
              (let [[headers body] val]
-               (initiate-request downstream state headers body))))))))
+               (initiate-request downstream state headers body))
+
+             (= :close evt)
+             (let [upstream (:upstream @state)]
+               (upstream :close val))))))))
 
 (defn start-server
   [host port]
