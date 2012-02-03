@@ -104,8 +104,9 @@
 (defn -main
   [& args]
   (let [[options positional-args banner] (cli args
+                                              ["--host" "Host to bind to"]
                                               ["--port" "Port to bind to"])]
     (if-let [p (:port options)]
-      (start "127.0.0.1" (Long/valueOf p))
+      (start (or (:host options) "127.0.0.1") (Long/valueOf p))
       (exit! "--port switch is required"))
     nil))
