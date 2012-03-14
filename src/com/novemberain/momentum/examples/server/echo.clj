@@ -1,8 +1,7 @@
 (ns com.novemberain.momentum.examples.server.echo
   (:gen-class)
   (:require [clojure.tools.logging   :as logging]
-            [momentum.http.server    :as http.server]
-            [momentum.http.aggregate :as aggregate])
+            [momentum.http.server    :as http.server])
   (:use [clojure.tools.cli]
         [momentum.core.buffer]))
 
@@ -20,16 +19,15 @@
 (defn- echo-app
   ([] (echo-app {}))
   ([opts]
-     (aggregate/middleware
-      (fn [dn env]
-        (fn [evt [headers body]]
-          (cond
+     (fn [dn env]
+       (fn [evt [headers body]]
+         (cond
            (= :request evt)
            (dn :response [200 headers body])
 
            :else
            (dn evt [headers body]))))
-      opts)))
+     opts))
 
 (defn start-server
   [host port]
