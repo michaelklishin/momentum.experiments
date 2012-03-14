@@ -7,7 +7,7 @@
                  [org.clojure/tools.cli      "0.2.1" :exclude [org.clojure/clojure]]
                  [org.clojure/data.json      "0.1.2" :exclude [org.clojure/clojure]]
                  [org.jboss.netty/netty      "3.2.7.Final"]
-                 [io.tilde.momentum/momentum "0.2.0-SNAPSHOT"]]
+                 [io.tilde.momentum/momentum "0.3.0-SNAPSHOT"]]
   :warn-on-reflection true
   :run-aliases {
                 :hello-world-server com.novemberain.momentum.examples.server.hello-world
